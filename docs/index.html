@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <meta charset="UTF-8">
+  <head>
+    <title>1co</title>
+    <script src="lib1co.js"></script>
+  </head>
+  <body>
+    <script>
+      function _get_cseq(i8array) {
+	  var cseq = document.getElementById("cseq").value;
+
+	  for (let i = 0; i < cseq.length; i++) {
+	      i8array[i] = cseq[i].charCodeAt(0);
+	  }
+
+	  return cseq.length;
+      }
+
+      function _copy_cseq(js, em, l) {
+	  for (let i = 0; i < l; i++) {
+	      Module.setValue(em + i, js[i], "i8");
+	  }
+      }
+
+      function eval() {
+	  var cseq_j = new Int8Array(document.getElementById("cseq").value.length);
+	  var l = _get_cseq(cseq_j);
+
+	  var cseq = Module._malloc(l);
+	  if (cseq === 0) {
+	      console.log("1co (error): failed to allocate enough memory");
+	      return;
+	  }
+
+	  _copy_cseq(cseq_j, cseq, l);
+
+          var tape = Module._malloc(30000);
+          if (tape === 0) {
+              console.log("1co (error): failed to allocate enough memory");
+	      Module._free(cseq);
+              return;
+          }
+
+          var blocks = Module._malloc(11);
+          if (blocks === 0) {
+              console.log("1co (error): failed to allocate enough memory");
+	      Module._free(tape);
+	      Module._free(cseq);
+              return;
+          }
+
+	  let ret = Module._eval(cseq, l, tape, blocks);
+
+	  console.log(ret);
+
+	  Module._free(blocks);
+	  Module._free(tape);
+	  Module._free(cseq);
+
+	  write_output(getValue(blocks, "i32"))
+      }
+
+      function write_output(n) {
+	  out = document.getElementById("output");
+	  out.innerText = "Happy Birthday, " + document.getElementById("cseq").value + "! " + String.fromCodePoint(0x1F382);
+
+	  for (i = 0; i < n; i++) {
+	      out.innerText += " " + String.fromCodePoint(0x1F382);
+	  }
+      }
+    </script>
+
+    
+    <textarea id="cseq" style="height: 3vw; width: 30vw;" name="cseq"></textarea><br><br><br>
+    <hr>
+    <p id="output"></p><br><br><br>
+    <button type="button" onclick="eval()">Execute</button>
+  </body>
+</html>
